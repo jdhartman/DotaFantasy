@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { withFirebase } from '../Firebase';
 import Popup from 'reactjs-popup';
-import logo from './logo.svg';
 import SignUp from '../signup';
+import SignIn from '../signin';
 import './index.css';
 
 class PlayerList extends Component {
@@ -44,7 +44,7 @@ class PlayerList extends Component {
   getPlayers = event => {
     
     var players = this.state.start.filter((name) => {
-      return name.toLowerCase().startsWith(event.target.value.toLowerCase())
+      return name.toLowerCase().includes(event.target.value.toLowerCase())
     })
 
     this.setState({
@@ -88,21 +88,57 @@ class PlayerList extends Component {
 
 class App extends Component {
  
-  
+  constructor(props) {
+    super(props);
+    this.state = {
+      open: false,
+      uid: '',
+      username: '',
+      button: 'Sign Up'
+    }
+  }
+  closePopUp = (uid, username) => {
+    this.setState({
+      open: false,
+      uid: uid,
+      username: username
+    })
+    console.log("UID: " + uid);
+    console.log('Username: ' + username);
+
+    if(username) {
+      this.setState({
+        button: 'Sign Out'
+      })
+    }
+  }
+
+  openPopUp = () => {
+    this.setState({
+      open: true
+    })
+  }
+
 
   render() {
     const SignUpForm = withFirebase(SignUp);
+    const SignInForm = withFirebase(SignIn);
     return (
       <div className="App">
         <header className="App-header">
           <p> Dota Fantasy League </p>
+          <h2>{this.state.username ? "Welcome,  " + this.state.username : ''}</h2>
         </header>
-        <Popup trigger={<button>Sign Up</button>} 
-          modal
-          closeOnDocumentClick >
-          <SignUpForm/>
-
-        </Popup>
+          <button onClick={this.openPopUp}>{this.state.button}</button>
+          <Popup open={this.state.open}
+            modal
+            closeOnDocumentClick >
+            <div className="Sign">
+              <SignUpForm closePop={this.closePopUp}/>
+              <SignInForm closePop={this.closePopUp}/>
+            </div>
+          </Popup>
+        
         <div id="player-list">
           <p> Search Player </p>
           <PlayerList />

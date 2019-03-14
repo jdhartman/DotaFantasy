@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import './index.css';
 
 class SignUp extends Component {
   constructor(props) {
@@ -7,7 +8,8 @@ class SignUp extends Component {
       username: '',
       email: '',
       password: '',
-      re_password: ''
+      re_password: '',
+      uid: ''
     }
     this.signUp = this.signUp.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -15,16 +17,25 @@ class SignUp extends Component {
   }
 
   signUp = event => {
-    console.log(this.props);
+    console.log(this.props.firebase);
+    
     this.props.firebase
       .doCreateUserWithEmailAndPassword(this.state.email, this.state.password)
       .then(authUser => {
-        console.log(authUser);
+        this.setState({
+          uid: authUser.user.uid
+        })
+        this.props.firebase.db.ref('users/' + this.state.uid).set({
+          username: this.state.username
+        });
+        this.props.closePop(this.state.uid, this.state.username);
+        
       })
       .catch(error => {
         console.log(error);
         this.setState({ error });
       });
+
   }
 
   onChange = event => {
@@ -54,8 +65,9 @@ class SignUp extends Component {
         })
         break;
       }
-
-
+      default: {
+        break;
+      }
     }
   }
 
@@ -67,6 +79,7 @@ class SignUp extends Component {
             <input type="text" 
                    name="username"   
                    value={this.state.username}
+                   placeholder="username"
                    onChange={this.onChange} 
 
             />
@@ -75,6 +88,7 @@ class SignUp extends Component {
             <input type="email" 
                    name="email"   
                    value={this.state.email}
+                   placeholder="email"
                    onChange={this.onChange} 
             />
           </form>
@@ -82,6 +96,7 @@ class SignUp extends Component {
             <input type="password" 
                    name="password"   
                    value={this.state.password}
+                   placeholder="password"
                    onChange={this.onChange} 
             />
           </form>
@@ -89,6 +104,7 @@ class SignUp extends Component {
             <input type="password" 
                    name="re-password"   
                    value={this.state.re_password}
+                   placeholder="re-enter password"
                    onChange={this.onChange} 
             />
           </form>
