@@ -9,37 +9,77 @@ class SignUp extends Component {
       email: '',
       password: '',
       re_password: '',
-      uid: ''
+      uid: '',
+      error: ''
     }
     this.signUp = this.signUp.bind(this);
     this.onChange = this.onChange.bind(this);
+    this.validated = this.validated.bind(this);
 
   }
 
-  signUp = event => {
-    console.log(this.props.firebase);
-    
-    this.props.firebase
-      .doCreateUserWithEmailAndPassword(this.state.email, this.state.password)
-      .then(authUser => {
-        this.setState({
-          uid: authUser.user.uid
-        })
-        this.props.firebase.db.ref('users/' + this.state.uid).set({
-          username: this.state.username
-        });
-        this.props.closePop(this.state.uid, this.state.username);
-        
-      })
-      .catch(error => {
-        console.log(error);
-        this.setState({ error });
+  validated() {
+    return this.state.password === this.state.re_password && 
+      this.state.password && 
+      this.state.email &&
+      this.state.username;
+  }
+
+  signUp = async event => {
+
+    if(!this.validated()) {
+      this.setState({ 
+        error: "Please fill out all forms"
+      });
+      return;
+    }
+
+    var newUserName = await this.props.firebase.db.collection("users")
+      .where("username", "==", this.state.username).get()
+      .catch(err => {
+        console.log('Error getting documents', err);
       });
 
+    console.log(newUserName.size);
+
+    if(newUserName.size > 0) {
+      this.setState({ 
+        error: "Username already exists"
+      });
+      return;
+    }
+    else {
+      this.props.firebase
+        .doCreateUserWithEmailAndPassword(this.state.email, this.state.password)
+        .then(authUser => {
+          this.setState({
+            uid: authUser.user.uid
+          })
+          this.props.firebase.db.collection("users").doc(this.state.uid).set({
+              username: this.state.username
+          })
+          this.props.closePop(this.state.uid, this.state.username);
+          
+        })
+        .catch(error => {
+          console.log(error);
+          this.setState({ 
+            error: error.message
+          });
+        });
+    }
+    
   }
 
+
   onChange = event => {
-    console.log(event.target.name);
+    //console.log(event.target.name);
+    if(this.state.error) {
+      this.setState({
+        error: ''
+      })
+    }
+
     switch(event.target.name) {
       case 'username': {
         this.setState ({
@@ -110,6 +150,7 @@ class SignUp extends Component {
           </form>
 
           <button onClick={this.signUp}> Sign Up </button>
+          <h5>{this.state.error}</h5>
       </div>
     );
   }

@@ -5,8 +5,11 @@ class SignIn extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      uid: '',
+      username: '',
       email: '',
       password: '',
+      error: ''
     }
     this.signUp = this.signIn.bind(this);
     this.onChange = this.onChange.bind(this);
@@ -18,19 +21,32 @@ class SignIn extends Component {
       .doSignInWithEmailAndPassword(this.state.email, this.state.password)
       .then((result) => {
         console.log(result.user);
-        var dbUserName = this.props.firebase.db.ref('users/' + result.user.uid).once('value').then(snapshot => {
-          this.props.closePop(result.user.uid, snapshot.val().username);
+        this.props.firebase.db.collection('users').doc(result.user.uid).get().then(snapshot => {
+          this.setState({
+            uid: result.user.uid,
+            username: snapshot.data().username
+          })
+          this.props.closePop(this.state.uid, this.state.username);
         });
         
       })
       .catch(error => {
-        console.log(error);
+        console.log(error.message);
+        this.setState({
+            error: error.message
+        })
       });
 
   }
 
   onChange = event => {
-    console.log(event.target.name);
+    //console.log(event.target.name);
+    if(this.state.error) {
+      this.setState({
+        error: ''
+      })
+    }
+
     switch(event.target.name) {
       case 'email': {
         this.setState ({
@@ -73,6 +89,8 @@ class SignIn extends Component {
           </form>
 
           <button onClick={this.signIn}> Login </button>
+
+          <h5>{this.state.error}</h5>
       </div>
     );
   }

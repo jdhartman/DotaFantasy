@@ -4,13 +4,14 @@ import Popup from 'reactjs-popup';
 import SignUp from '../signup';
 import SignIn from '../signin';
 import './index.css';
+import players from '../../resouces/players';
 
 class PlayerList extends Component {
   constructor(props) {
     super(props);
     this.state = {
       start: [],
-      players: ["player 1", "player 2", "Moo", "Vause"],
+      players: [],
       playerSearch: '',
       rows: []
     }
@@ -18,33 +19,41 @@ class PlayerList extends Component {
   }
 
   componentDidMount() {
-    fetch("https://api.opendota.com/api/proplayers")
-      .then(res => res.json())
-      .then(
-        (result) => {
-          console.log(result);
-          var playerName = result.map(function (player) {
-            return player.name;
-          });
-          playerName.sort();
-          this.setState({
-            start: playerName,
-            players: playerName
-          })
-        },
-        // Note: it's important to handle errors here
-        // instead of a catch() block so that we don't swallow
-        // exceptions from actual bugs in components.
-        (error) => {
-          console.log(error);
-        }
-      )
+    var keys = Object.keys(players);
+    console.log(keys);
+    var newPlayer = [];
+    var sortedPlayer = [];
+    console.log(players[keys[0]]);
+
+    for(var i = 0; i < keys.length; i++) {
+      for (var play in players[keys[i]]) {
+        newPlayer.push(players[keys[i]][play])
+        console.log(play);
+      }
+    }
+    
+    sortedPlayer = newPlayer.sort(function(a,b) {
+      var x = a.name.toLowerCase();
+      var y = b.name.toLowerCase();
+      return x < y ? -1 : x > y ? 1 : 0;
+    });
+
+
+    console.log(newPlayer);
+
+    this.setState({
+      start: sortedPlayer,
+      players: sortedPlayer,
+      keyStart: keys,
+      keys: keys
+    })
   }
 
   getPlayers = event => {
     
     var players = this.state.start.filter((name) => {
-      return name.toLowerCase().includes(event.target.value.toLowerCase())
+      return name.name.toLowerCase().includes(event.target.value.toLowerCase()) || 
+        name.team.toLowerCase().includes(event.target.value.toLowerCase())
     })
 
     this.setState({
@@ -55,9 +64,10 @@ class PlayerList extends Component {
 
   render() {
     const player = this.state.players.map((item, i) => (
-        <tr>
-          <td>{i}</td>
-          <td>{item}</td>
+        <tr key={i}>
+          <td>{item.name}</td>
+          <td>{item.country}</td>
+          <td>{item.team}</td>
         </tr>
       ));
 
@@ -76,7 +86,8 @@ class PlayerList extends Component {
           <thead>
             <tr>
               <th>Player</th>
-              <th>Add</th>
+              <th>Country</th>
+              <th>Team</th>
             </tr>
           </thead>
         <tbody>{player}</tbody>
@@ -94,9 +105,42 @@ class App extends Component {
       open: false,
       uid: '',
       username: '',
-      button: 'Sign Up'
+      button: 'Sign Up',
     }
   }
+
+  componentDidMount() {
+    this.listener = this.props.firebase.auth.onAuthStateChanged(user => {
+      if (user) {
+        // User is signed in.
+        console.log("user logged in");
+        console.log(user);
+
+        this.props.firebase.db.collection('users').doc(user.uid).get().then(snapshot => {
+          this.setState({
+            uid: user.uid,
+            username: snapshot.data().username,
+            button: 'Sign Out'
+          })
+        });
+
+      } else {
+        // No user is signed in.
+        console.log("no user");
+        this.setState({
+          uid: '',
+          username: '',
+          button: 'Sign Up'
+        })
+      }
+    });
+    console.log(this.props.firebase.auth.currentUser);
+  }
+
+  componentWillUnmount() {
+    this.listener();
+  }
+
   closePopUp = (uid, username) => {
     this.setState({
       open: false,
@@ -114,9 +158,18 @@ class App extends Component {
   }
 
   openPopUp = () => {
-    this.setState({
-      open: true
-    })
+    if(this.state.uid) {
+      this.props.firebase.doSignOut()
+      .catch(error => {
+        console.log(error);
+      })
+    }
+    else {
+      this.setState({
+        open: true
+      })
+    }
+    
   }
 
 
@@ -149,4 +202,4 @@ class App extends Component {
   }
 }
 
-export default App;
+export default withFirebase(App);
