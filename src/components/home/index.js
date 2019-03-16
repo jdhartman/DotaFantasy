@@ -5,8 +5,8 @@ import Popup from 'reactjs-popup';
 import SignUp from '../signup';
 import SignIn from '../signin';
 import CreateLeague from '../create-league';
+import JoinLeague from '../join-league';
 import UserLeagues from '../user-leagues';
-import PlayerList from '../player-list'
 import './index.css';
 
 
@@ -21,9 +21,6 @@ class App extends Component {
       username: '',
       button: 'Sign Up',
     }
-  }
-
-  componentDidMount() {
     this.listener = this.props.firebase.auth.onAuthStateChanged(user => {
       if (user) {
         // User is signed in.
@@ -49,6 +46,7 @@ class App extends Component {
       }
     });
   }
+
 
   componentWillUnmount() {
     this.listener();
@@ -91,6 +89,7 @@ class App extends Component {
     const SignInForm = withFirebase(SignIn);
     const CreateLeagueBase = withFirebase(CreateLeague);
     const UserLeaguesBase = withFirebase(UserLeagues);
+    const JoinLeagueBase = withFirebase(JoinLeague);
 
     return (
       <div className="App">
@@ -111,12 +110,13 @@ class App extends Component {
           <div className="LeagueSetup">
             <Link to='/create'><button>Create a League</button></Link>
             <Link to={'/league/' + this.state.uid}><button>My Leagues</button></Link>
-            <button>Join a League</button>
+            <Link to={'/join'}><button>Join a League</button></Link>
           </div>
 
           <Switch>
-            <Route path='/league/:uid' component={UserLeaguesBase}/>
+            <Route path='/league/:uid' render={() => <UserLeaguesBase uid={this.state.uid} /> } />
             <Route path='/create' component={CreateLeagueBase}/>
+            <Route path='/join' component={() => <JoinLeagueBase uid={this.state.uid} />}/>
           </Switch>
 
           

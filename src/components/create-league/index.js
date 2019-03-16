@@ -58,7 +58,7 @@ class CreateLeague extends Component {
           // Data payload of what we are sending back, the url of the signedRequest and a URL where we can access the content after its saved. 
           const returnData = {
             signedRequest: data,
-            url: `https://${S3_BUCKET}.s3.amazonaws.com/${fileName}`
+            url: `https://s3.us-east-2.amazonaws.com/${S3_BUCKET}/photos/${fileName}`
           };
           // Send it all back
           console.log(returnData);
@@ -76,14 +76,15 @@ class CreateLeague extends Component {
           axios.put(signedRequest,file,options)
           .then(result => {
             console.log("Response from s3")
-            console.log(result.request.responseURL);
+            console.log(result);
             this.props.firebase.db.collection("leagues").add({
                 commissioner: this.state.uid,
                 name: this.state.leagueName,
                 photo: this.state.pictureURL
             }).then((docRef) => {
-              this.props.firebase.db.collection("users").doc(this.state.uid).collection("leagues").add({
-                  [docRef.id] : this.state.leagueName 
+              this.props.firebase.db.collection("users").doc(this.state.uid).collection("leagues").doc(docRef.id).set({
+                  name : this.state.leagueName,
+                  status: 2 //0 for invite requested, 1 for member, 2 for commissioner
               });
             })
             

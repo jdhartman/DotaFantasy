@@ -11,19 +11,22 @@ class PlayerList extends Component {
       rows: []
     }
     this.getPlayers = this.getPlayers.bind(this);
+    this.getInitialState = this.getInitialState.bind(this);
+
   }
 
   componentDidMount() {
+    console.log("COMPONENT DID MOUNT");
     var keys = Object.keys(players);
-    console.log(keys);
+    //console.log(keys);
     var newPlayer = [];
     var sortedPlayer = [];
-    console.log(players[keys[0]]);
+    //console.log(players[keys[0]]);
 
     for(var i = 0; i < keys.length; i++) {
       for (var play in players[keys[i]]) {
         newPlayer.push(players[keys[i]][play])
-        console.log(play);
+        //console.log(play);
       }
     }
     
@@ -32,9 +35,10 @@ class PlayerList extends Component {
       var y = b.name.toLowerCase();
       return x < y ? -1 : x > y ? 1 : 0;
     });
+    this.getInitialState(sortedPlayer, keys);
+  }
 
-
-    console.log(newPlayer);
+  getInitialState(sortedPlayer, keys) {
 
     this.setState({
       start: sortedPlayer,
